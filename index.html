@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Circuit Quest</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f4fd8">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#fbfaf6;--grid:#d5dcec;--blue:#1f4fd8;--red:#d8262f;--ink:#1c2233;--ok:#17803d;--card:#ffffff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#171b2b;--grid:#2a3150;--blue:#7da2ff;--red:#ff7b82;--ink:#e8ebf5;--ok:#5fd68a;--card:#1f2438}}
+:root[data-theme="dark"]{--paper:#171b2b;--grid:#2a3150;--blue:#7da2ff;--red:#ff7b82;--ink:#e8ebf5;--ok:#5fd68a;--card:#1f2438}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;color:var(--ink);font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+background-color:var(--paper);
+background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+background-size:28px 28px}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1,h2{font-family:Caveat,"Segoe Print","Comic Sans MS",cursive;margin:0;line-height:1.1}
+h1{font-size:3rem;color:var(--blue)}
+h2{font-size:1.9rem;color:var(--blue)}
+.red{color:var(--red)}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-weight:600}
+.hearts{letter-spacing:3px}
+.card{background:var(--card);border:2px solid var(--blue);border-radius:6px 14px 8px 12px;padding:18px;margin-bottom:14px}
+.q{font-size:1.15rem;margin:0 0 14px}
+.eq{font-family:Caveat,cursive;font-size:1.5rem;color:var(--red)}
+button{font:inherit;cursor:pointer}
+.opt{display:block;width:100%;text-align:left;margin:0 0 10px;padding:12px 14px;background:var(--card);color:var(--ink);border:2px solid var(--grid);border-radius:10px;min-height:48px}
+.opt:hover:not(:disabled){border-color:var(--blue)}
+.opt:focus-visible,.go:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.opt.good{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--card))}
+.opt.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 16%,var(--card))}
+.go{background:var(--blue);color:var(--paper);border:0;border-radius:10px;padding:13px 22px;font-weight:700;min-height:48px}
+.fb{margin:6px 0 14px;padding:12px 14px;border-left:5px solid var(--red);background:var(--card)}
+.fb.ok{border-color:var(--ok)}
+.prog{height:8px;background:var(--grid);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.prog i{display:block;height:100%;background:var(--red);transition:width .3s}
+.big{font-family:Caveat,cursive;font-size:4rem;color:var(--red);line-height:1}
+.muted{opacity:.75;font-size:.95rem}
+@media (prefers-reduced-motion:reduce){.prog i{transition:none}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const Q=[
+{q:"Une pile de 12 V alimente une résistance de 4 Ω. Quel courant circule ?",eq:"U = R × I",a:"3 A",w:["48 A","0,33 A","8 A"],e:"I = U / R = 12 / 4 = 3 A."},
+{q:"Dans le théorème de Thévenin, que représente E_th ?",a:"La tension à vide entre A et B",w:["Le courant de court-circuit","La résistance vue entre A et B","La puissance de la source"],e:"On enlève la charge et on calcule la tension U_AB : c’est E_th."},
+{q:"Pour calculer R_th, que fait-on d’une source de tension ?",a:"On la remplace par un fil (court-circuit)",w:["On la remplace par un circuit ouvert","On double sa valeur","On la laisse en place"],e:"Source de tension éteinte = fil. Source de courant éteinte = circuit ouvert."},
+{q:"Pour calculer R_th, que fait-on d’une source de courant ?",a:"On la remplace par un circuit ouvert",w:["On la remplace par un fil","On la remplace par une résistance de 1 Ω","On la double"],e:"Une source de courant éteinte ne débite plus rien : c’est comme un fil coupé."},
+{q:"E = 10 V en série avec R1 = 2 Ω, puis R2 = 3 Ω entre A et B. Quelle est E_th ?",eq:"E_th = E × R2 / (R1 + R2)",a:"6 V",w:["4 V","10 V","5 V"],e:"Diviseur de tension : 10 × 3 / (2 + 3) = 6 V."},
+{q:"Même circuit : que vaut R_th (R1 en parallèle avec R2) ?",eq:"R_th = R1 × R2 / (R1 + R2)",a:"1,2 Ω",w:["5 Ω","2,5 Ω","6 Ω"],e:"(2 × 3) / (2 + 3) = 6 / 5 = 1,2 Ω."},
+{q:"Un circuit a E_th = 6 V et R_th = 1,2 Ω. Quel est son courant de Norton I_N ?",eq:"I_N = E_th / R_th",a:"5 A",w:["7,2 A","0,2 A","4,8 A"],e:"I_N = 6 / 1,2 = 5 A."},
+{q:"Sur la fiche du 741C, que signifie Vcc = ±18 V ?",a:"La tension d’alimentation : +18 V et −18 V",w:["La tension d’entrée maximale","La tension de sortie au repos","Le gain en tension"],e:"Vcc est la tension d’alimentation. La sortie ne dépasse pas environ ±Vcc."},
+{q:"Le 741C a A₀ = 2·10⁵. Pour une sortie de 10 V, quelle différence V₊ − V₋ faut-il ?",eq:"Vs = A₀ × (V₊ − V₋)",a:"50 µV",w:["5 mV","0,2 V","20 µV"],e:"10 / (2·10⁵) = 0,00005 V = 50 µV. Un si petit écart suffit : d’où la contre-réaction."},
+{q:"Rₒ = 75 Ω pour le 741C. Qu’est-ce que cela indique ?",a:"La résistance de sortie est faible : il peut alimenter une charge",w:["La résistance d’entrée est énorme","Il consomme 75 W","Il est en court-circuit"],e:"Plus Rₒ est petite, plus la sortie se comporte comme une bonne source de tension."},
+{q:"Que mesure la vitesse de variation de la tension (slew rate) ?",a:"La rapidité maximale de changement de la sortie, en V/µs",w:["Le gain en continu","La consommation en mA","La résistance d’entrée"],e:"Si le signal change plus vite que le slew rate, la sortie est déformée."}
+,
+{q:"Quelle est l’unité de la résistance électrique ?",a:"L’ohm (Ω)",w:["Le volt (V)","L’ampère (A)","Le watt (W)"],e:"La résistance se mesure en ohms (Ω), d’après la loi d’Ohm U = R × I."},
+{q:"Un appareil sous 5 V est traversé par 2 A. Quelle puissance reçoit-il ?",eq:"P = U × I",a:"10 W",w:["2,5 W","7 W","0,4 W"],e:"P = 5 × 2 = 10 W."},
+{q:"Deux résistances de 10 Ω et 20 Ω sont en série. Quelle est la résistance totale ?",a:"30 Ω",w:["6,7 Ω","200 Ω","15 Ω"],e:"En série, les résistances s’additionnent : 10 + 20 = 30 Ω."},
+{q:"Deux résistances de 10 Ω sont en parallèle. Quelle est la résistance totale ?",eq:"R = R1 × R2 / (R1 + R2)",a:"5 Ω",w:["20 Ω","10 Ω","100 Ω"],e:"(10 × 10) / (10 + 10) = 5 Ω."},
+{q:"Quel est le lien entre R_N (Norton) et R_th (Thévenin) ?",a:"Elles sont égales",w:["R_N = 1 / R_th","R_N = 2 × R_th","Elles n’ont aucun lien"],e:"R_N = R_th : elles se calculent de la même façon."},
+{q:"R_th = 4 Ω et I_N = 3 A. Que vaut E_th ?",eq:"E_th = R_th × I_N",a:"12 V",w:["0,75 V","7 V","1,33 V"],e:"E_th = 4 × 3 = 12 V."},
+{q:"Pour un AOP idéal, que vaut la résistance d’entrée Rᵢ ?",a:"Elle est infinie",w:["Elle est nulle","Elle vaut 75 Ω","Elle vaut 1 Ω"],e:"Rᵢ infinie : aucun courant n’entre dans les entrées de l’AOP."},
+{q:"Un AOP idéal fonctionne en régime linéaire. Que dit-on de V₊ et V₋ ?",a:"V₊ = V₋",w:["V₊ = 0 toujours","V₊ = 2 × V₋","V₊ = Vcc"],e:"Avec A₀ infini, la différence V₊ − V₋ est nulle en régime linéaire."},
+{q:"À quoi sert la contre-réaction sur un AOP ?",a:"À éviter la saturation et rester en régime linéaire",w:["À augmenter A₀ à l’infini","À supprimer l’alimentation","À éteindre l’AOP"],e:"Sans elle, un écart de quelques dizaines de µV suffit à saturer la sortie."},
+{q:"741C : Vcc = ±18 V et Icc = 1,7 mA. Quelle puissance consomme-t-il au repos ?",eq:"P = 2 × Vcc × Icc",a:"Environ 61 mW",w:["Environ 31 mW","Environ 61 W","Environ 6 mW"],e:"P = 2 × 18 × 1,7·10⁻³ ≈ 0,061 W = 61 mW."}
+];
+const app=document.getElementById("app");
+const N=10;
+let i,score,lives,locked,order;
+function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
+function best(v){try{if(v!==undefined){localStorage.setItem("cq-best",String(v));return v}return +localStorage.getItem("cq-best")||0}catch(e){return v||0}}
+function start(){i=0;score=0;lives=3;order=shuffle(Q.map((_,k)=>k)).slice(0,N);intro()}
+function intro(){
+app.innerHTML=`<h1>Circuit Quest</h1><p class="eq">Thévenin, Norton et AOP 741C</p>
+<div class="card"><p>10 questions tirées de ton cours. Chaque bonne réponse vaut 10 points. Tu as 3 vies ♥ : une erreur en coûte une.</p><p class="muted">Meilleur score : ${best()} / 100</p><button class="go" id="s">Commencer</button></div>`;
+document.getElementById("s").onclick=ask}
+function ask(){
+const d=Q[order[i]];locked=false;
+const opts=shuffle([d.a,...d.w]);
+app.innerHTML=`<div class="bar"><span>Question ${i+1} / ${N}</span><span class="hearts red" aria-label="${lives} vies">${"♥".repeat(lives)}${"♡".repeat(3-lives)}</span><span>${score} pts</span></div>
+<div class="prog"><i style="width:${i/N*100}%"></i></div>
+<div class="card"><p class="q">${d.q}</p>${d.eq?`<p class="eq">${d.eq}</p>`:""}<div id="o"></div><div id="f"></div></div>`;
+const o=document.getElementById("o");
+opts.forEach(t=>{const b=document.createElement("button");b.className="opt";b.textContent=t;b.onclick=()=>pick(b,t,d);o.appendChild(b)})}
+function pick(b,t,d){
+if(locked)return;locked=true;
+const ok=t===d.a;
+document.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(x.textContent===d.a)x.classList.add("good")});
+if(ok){score+=10}else{b.classList.add("bad");lives--}
+const last=i===N-1||lives===0;
+document.getElementById("f").innerHTML=`<div class="fb ${ok?"ok":""}"><b>${ok?"Bravo !":"Pas tout à fait."}</b> ${d.e}</div><button class="go" id="n">${last?"Voir mon résultat":"Question suivante"}</button>`;
+const n=document.getElementById("n");n.focus();
+n.onclick=()=>{i++;last?end():ask()}}
+function end(){
+const won=lives>0&&i>=N;
+if(score>best())best(score);
+const msg=score===100?"Parfait, tu maîtrises le cours !":score>=70?"Très bien, encore un petit effort.":score>=40?"Pas mal. Relis ton cours et réessaie.":"Courage : relis le cours puis recommence.";
+app.innerHTML=`<h2>${won?"Partie terminée":"Plus de vies"}</h2><div class="card"><div class="big">${score}<span style="font-size:2rem"> / 100</span></div><p>${msg}</p><p class="muted">Meilleur score : ${best()} / 100</p><button class="go" id="r">Rejouer</button></div>`;
+document.getElementById("r").onclick=start}
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+start();
+</script>
+</body>
+</html>
